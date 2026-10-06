@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>如何使用AI逆向一款游戏</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,600&family=Noto+Serif+SC:wght@600;900&display=block" rel="stylesheet">
+<style>:root {
+  --paper: #f5f1e9;
+  --paper-2: #ece5d8;
+  --ink: #1b1916;
+  --ink-2: #48433b;
+  --muted: #8c8478;
+  --rule: #ddd3c3;
+  --accent: #c2412a;
+  --accent-soft: #f5e1d8;
+  --warn: #a8691a;
+  --warn-soft: #f6ead3;
+  --code: #1e1c19;
+  --serif: "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --sans: "HarmonyOS Sans SC", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --num: "Fraunces", Georgia, serif;
+  --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .35  0 0 0 0 .28  0 0 0 0 .2  0 0 0 .07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  font-size: 17px;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper) var(--grain);
+  font-family: var(--sans);
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+a { color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); }
+em { font-style: normal; }
+
+#article { max-width: 46rem; margin: 0 auto; padding: 5rem 1.5rem 7rem; }
+#pages { display: none; }
+
+.toc {
+  position: fixed; top: 5.5rem; left: max(1.5rem, calc(50vw - 46rem));
+  width: 12rem; display: none; flex-direction: column; gap: .15rem;
+  font-size: .82rem;
+}
+.toc-title { font-family: var(--serif); font-weight: 900; color: var(--ink); margin-bottom: .6rem; letter-spacing: .06em; }
+.toc a {
+  display: flex; gap: .6rem; align-items: baseline; border: 0; color: var(--muted);
+  padding: .3rem 0 .3rem .7rem; border-left: 2px solid var(--rule); transition: color .2s, border-color .2s;
+}
+.toc a em { font-family: var(--num); font-style: italic; font-size: .9rem; color: inherit; min-width: 1.3rem; }
+.toc a:hover, .toc a.active { color: var(--ink); border-left-color: var(--accent); }
+@media (min-width: 1280px) { .toc { display: flex; } }
+
+.block { margin-top: 1.4rem; }
+.block > :first-child { margin-top: 0; }
+.block > :last-child { margin-bottom: 0; }
+p { margin: 0; }
+strong { font-weight: 700; color: var(--ink); background: linear-gradient(transparent 62%, color-mix(in srgb, var(--accent) 16%, transparent) 62%); }
+
+.hero { position: relative; margin: 0 0 1.8rem; padding-top: 1rem; }
+.hero-num {
+  position: absolute; right: -.2rem; top: -1.6rem; z-index: 0;
+  font-family: var(--num); font-style: italic; font-weight: 600; font-size: 8rem; line-height: 1;
+  color: transparent; -webkit-text-stroke: 1.5px color-mix(in srgb, var(--accent) 45%, transparent);
+  letter-spacing: -.04em; user-select: none;
+}
+.hero-kicker {
+  position: relative; display: flex; align-items: center; gap: .7rem;
+  color: var(--accent); font-weight: 700; font-size: .9rem; letter-spacing: .32em;
+}
+.hero-kicker span { width: 2.2rem; height: 2px; background: var(--accent); }
+.hero h1 {
+  position: relative; margin: .9rem 0 0; max-width: 82%;
+  font-family: var(--serif); font-weight: 900; font-size: 2.45rem; line-height: 1.32; letter-spacing: .01em;
+}
+.hero-meta { position: relative; margin-top: 1rem; font-size: .85rem; color: var(--muted); letter-spacing: .12em; }
+.lead { font-size: 1.1rem; color: var(--ink-2); line-height: 1.95; padding-left: 1.1rem; border-left: 3px solid var(--accent); }
+
+.chapter-head { margin-top: 4.2rem; padding-bottom: .9rem; border-bottom: 1px solid var(--rule); position: relative; }
+.chapter-head::after { content: ""; position: absolute; left: 0; bottom: -2px; width: 3.2rem; height: 3px; background: var(--ink); }
+.part { font-family: var(--num); font-size: .95rem; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.part em { font-style: italic; font-weight: 600; color: var(--accent); font-size: 1.35rem; margin-left: .2rem; letter-spacing: 0; }
+.chapter-head h2 { margin: .15rem 0 0; font-family: var(--serif); font-weight: 900; font-size: 1.85rem; line-height: 1.35; }
+
+.step-head { display: flex; align-items: center; gap: .85rem; margin-top: 2.6rem; }
+.step-dot {
+  flex: none; width: 2.3rem; height: 2.3rem; border-radius: 50%;
+  display: grid; place-items: center; background: var(--accent); color: #fff;
+  box-shadow: 0 0 0 5px var(--paper), 0 0 0 6px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.step-dot em { font-family: var(--num); font-style: italic; font-weight: 600; font-size: 1.15rem; line-height: 1; transform: translateY(-1px); }
+.step-head h3 { margin: 0; font-size: 1.28rem; font-weight: 700; line-height: 1.4; display: flex; flex-direction: column; }
+.step-head h3 small { font-size: .74rem; font-weight: 500; color: var(--muted); letter-spacing: .18em; }
+
+.block.in-step:not(.step-head) {
+  margin-top: 0; padding-top: 1.25rem; padding-left: 3.15rem; position: relative;
+}
+.block.in-step:not(.step-head)::before {
+  content: ""; position: absolute; left: 1.15rem; top: 0; bottom: 0;
+  border-left: 1.5px dashed var(--rule);
+}
+
+.substep p { display: flex; align-items: center; gap: .6rem; font-size: 1.08rem; }
+.substep p::before { content: ""; width: .5rem; height: .5rem; background: var(--accent); transform: rotate(45deg); flex: none; }
+.substep strong { background: none; }
+.block.substep:not(.in-step) { margin-top: 2rem; }
+
+ul, ol { margin: 0; padding-left: 1.3rem; }
+li { margin: .35rem 0; }
+li::marker { color: var(--accent); }
+
+.figure figure { margin: 0; }
+.frame {
+  border-radius: 14px; overflow: hidden; background: #111;
+  box-shadow: 0 0 0 1px rgba(27, 25, 22, .1), 0 2px 4px rgba(40, 30, 20, .06), 0 22px 44px -22px rgba(40, 30, 20, .45);
+}
+.frame img { display: block; width: 100%; height: auto; }
+figcaption { margin-top: .7rem; font-size: .84rem; color: var(--muted); display: flex; gap: .6rem; align-items: baseline; }
+figcaption em { font-family: var(--num); font-style: italic; font-weight: 600; color: var(--accent); white-space: nowrap; }
+
+.callout .callout-label {
+  display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .2em;
+  padding: .05rem .55rem; border-radius: 99px; margin-bottom: .45rem;
+}
+.callout-box { border-radius: 12px; padding: 1rem 1.2rem; font-size: .95rem; line-height: 1.85; }
+.callout-box p + p { margin-top: .5rem; }
+.callout.note .callout-box { background: var(--paper-2); }
+.callout.note .callout-label { background: var(--ink); color: var(--paper); }
+.callout.warn .callout-box { background: var(--warn-soft); box-shadow: inset 3px 0 0 var(--warn); }
+.callout.warn .callout-label { background: var(--warn); color: #fff; }
+
+.code pre {
+  position: relative; margin: 0; padding: 1.1rem 1.3rem; border-radius: 12px;
+  background: var(--code); color: #efe6d6; font-family: var(--mono); font-size: .86rem; line-height: 1.75;
+  white-space: pre-wrap; word-break: break-all;
+}
+.copy {
+  position: absolute; top: .55rem; right: .6rem; border: 1px solid #45403a; background: transparent; color: #b6ab99;
+  font: 600 .7rem var(--sans); padding: .2rem .6rem; border-radius: 6px; cursor: pointer;
+}
+.copy:hover { color: #fff; border-color: #807565; }
+code { font-family: var(--mono); font-size: .88em; background: var(--paper-2); padding: .08em .4em; border-radius: 5px; color: var(--ink); }
+pre code { background: none; padding: 0; color: inherit; }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .92rem; line-height: 1.6; }
+th {
+  text-align: left; font-size: .74rem; font-weight: 700; letter-spacing: .14em; color: var(--muted);
+  padding: .5rem .75rem; border-bottom: 1.5px solid var(--ink);
+}
+td { padding: .7rem .75rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+td:first-child { font-weight: 600; }
+
+.end { margin-top: 3.5rem; display: flex; align-items: center; gap: 1rem; color: var(--muted); font-size: .8rem; letter-spacing: .3em; }
+.end::before, .end::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+.end em { font-family: var(--num); font-style: italic; color: var(--accent); letter-spacing: 0; font-size: 1.1rem; }
+
+.todo {
+  display: flex; gap: .8rem; align-items: center; padding: 1.1rem 1.2rem; border-radius: 12px;
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, transparent); color: var(--ink-2); font-size: .9rem;
+  background: repeating-linear-gradient(-45deg, transparent 0 10px, color-mix(in srgb, var(--accent) 5%, transparent) 10px 20px);
+}
+.todo span { flex: none; font-size: .72rem; font-weight: 700; letter-spacing: .16em; color: var(--accent); }
+
+html[data-mode="pages"] { font-size: 21px; }
+html[data-mode="pages"] body { background: #cfc7b8; }
+html[data-mode="pages"] .toc, html[data-mode="pages"] #article { display: none; }
+html[data-mode="pages"] #pages { display: flex; flex-direction: column; align-items: center; gap: 40px; padding: 40px 0; }
+html[data-mode="pages"] .copy { display: none; }
+
+.page {
+  width: 1080px; height: 1440px; flex: none; position: relative; overflow: hidden;
+  display: flex; flex-direction: column; padding: 58px 78px 50px;
+  background: var(--paper) var(--grain);
+}
+.page::before { content: ""; position: absolute; left: 0; top: 0; right: 0; height: 8px; background: var(--accent); }
+.page-top, .page-foot {
+  flex: none; display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 15px; color: var(--muted); letter-spacing: .08em;
+}
+.page-top { padding-bottom: 18px; border-bottom: 1px solid var(--rule); }
+.page-top b { color: var(--ink); font-weight: 700; letter-spacing: .12em; }
+.page-top span { max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.page-body { flex: 1; min-height: 0; overflow: hidden; padding-top: 34px; }
+.page-body > .block:first-child:not(.in-step) { margin-top: 0; }
+.page-body > .block.in-step:first-child:not(.step-head) { padding-top: 0; }
+.page-body > .hero:first-child { margin-top: 60px; }
+.page-foot { padding-top: 16px; border-top: 1px solid var(--rule); }
+.page-foot em { font-family: var(--num); font-style: italic; font-weight: 600; font-size: 22px; color: var(--ink); letter-spacing: 0; }
+.page-foot em small { font-size: 15px; color: var(--muted); }
+
+/* README 写法补充 */
+.langs { font-size: .85rem; color: var(--muted); letter-spacing: .04em; }
+.langs a { color: var(--ink-2); }
+.sub-head h3, .sub-head h4 { margin: 0; line-height: 1.45; }
+.sub-head.d3 { margin-top: 2.6rem; }
+.sub-head.d3 h3 { font-family: var(--serif); font-weight: 900; font-size: 1.32rem; display: flex; align-items: center; gap: .65rem; }
+.sub-head.d3 h3::before { content: ""; width: .55rem; height: 1.15rem; background: var(--accent); flex: none; }
+.sub-head.d4 { margin-top: 1.7rem; }
+.sub-head.d4 h4 { font-size: 1rem; font-weight: 700; color: var(--ink-2); display: flex; align-items: center; gap: .55rem; }
+.sub-head.d4 h4::before { content: ""; width: .45rem; height: .45rem; background: var(--accent); transform: rotate(45deg); flex: none; }
+.sub-head code { font-size: .85em; }
+td code, th code { white-space: nowrap; font-size: .82em; }
+td:first-child { min-width: 9.5em; }
+.lead + .paragraph, .lead + .langs { margin-top: 1.1rem; }
+html[data-mode="pages"] .web-only { display: none; }
+.page-body > .block.sub-head:first-child, .page-body > .block.table.cont:first-child { margin-top: 0; }
+
+/* 文章站 */
+.home { display: inline-block; margin-bottom: 2rem; font-size: .85rem; color: var(--muted); border: 0; letter-spacing: .12em; }
+.home::before { content: "← "; }
+.home:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+<nav class="toc" aria-label="章节">
+  <div class="toc-title">如何使用AI逆向一款游戏</div>
+  <a href="#环境"><em>00</em>环境</a><a href="#提取资源"><em>01</em>提取资源</a><a href="#解包资源"><em>02</em>解包资源</a><a href="#资源映射"><em>03</em>资源映射</a><a href="#材质，贴图，Shader"><em>04</em>材质，贴图，Shader</a><a href="#骨骼，蒙皮，动画"><em>05</em>骨骼，蒙皮，动画</a><a href="#镜头，运镜，场景，道具"><em>06</em>镜头，运镜，场景，道具</a><a href="#粒子特效"><em>07</em>粒子特效</a><a href="#碰撞，布料模拟"><em>08</em>碰撞，布料模拟</a><a href="#灯光"><em>09</em>灯光</a><a href="#其他细节"><em>10</em>其他细节</a><a href="#后记"><em>✦</em>后记</a>
+</nav>
+<main id="article">
+<a class="home" href="../">全部文章</a>
+<header class="block hero" data-ctx="">
+      
+      
+      <h1>如何使用AI逆向一款游戏</h1>
+      <div class="hero-meta">Terry · 2026-10-05</div>
+    </header>
+<div class="block lead" data-ctx=""><p>首先，写在最前面，出于对这款游戏（以及我自己）的保护，我是不会提供任何关于这款游戏的信息或是截图的。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>其次，标题里与其说是“使用AI”，倒不如说是“观摩AI”，全程我自己没做什么技术指导，基本上就是提需求。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>但是在前AI的年代，因为我自己对这款游戏做过一定程度的逆向分析，所以AI做的大致方向我还是懂一些的。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>写这篇观摩AI的文章的初衷更多是感慨，以前那些日日夜夜的研究，几天的功夫可能才达到30%，但是现在AI几乎2个小时就做到了80%，唏嘘不已。</p>
+</div>
+<div class="block paragraph keep" data-ctx=""><p>同时我不会回答任何类似的问题：</p>
+</div>
+<div class="block list" data-ctx=""><ul>
+<li>“这是什么游戏？”</li>
+<li>“能不能用在其他游戏上？”</li>
+<li>“我的AI为什么不行？”</li>
+</ul>
+</div>
+<div class="block paragraph" data-ctx=""><p>更不可能“帮我也搞下呗，付费也行”这样的。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>本文仅作技术分享，抛砖引玉，请使用你的AI进行验证。</p>
+</div>
+<div id="环境" class="block chapter-head keep" data-ctx="环境">
+      <div class="part">Part <em>00</em></div>
+      <h2>环境</h2></div>
+<div class="block list" data-ctx="环境"><ul>
+<li>游戏：某手机游戏安卓版</li>
+<li>运行环境：某安卓模拟器</li>
+<li>游戏引擎：Unity定制版</li>
+<li>AI：Claude Opus 5.5</li>
+<li>操作系统：Windows 10</li>
+</ul>
+</div>
+<div class="block paragraph keep" data-ctx="环境"><p>同时因为我本来就是开发者，所以本机已经装了很多开发类的工具，比如：</p>
+</div>
+<div class="block paragraph" data-ctx="环境"><p>Java，nodejs，python，VS等，在后面的AI逆向过程中，我看到他们都被用到了。</p>
+</div>
+<div id="提取资源" class="block chapter-head keep" data-ctx="提取资源">
+      <div class="part">Part <em>01</em></div>
+      <h2>提取资源</h2></div>
+<div class="block paragraph" data-ctx="提取资源"><p>这其实是我最开始的目的，我本来就是想试一试如何用AI提取一下，以前提过的这个游戏。</p>
+</div>
+<div class="block paragraph" data-ctx="提取资源"><p>当我和AI提出这个需求的时候，我只把模拟器的路径给了它，结果它自己调用了工具，列出来了模拟器中占用最大的那个，就是我想要的那个。</p>
+</div>
+<div class="block shot-todo" data-ctx="提取资源"><div class="todo"><span>待补截图</span>AI 列出模拟器里占用最大的那个，就是要提取的游戏</div></div>
+<div class="block paragraph" data-ctx="提取资源"><p>这里面有一个前置条件，是我提前进入到了游戏在游戏中把全部资源下载了下来。</p>
+</div>
+<div class="block paragraph" data-ctx="提取资源"><p>和AI这么说的时候，AI自己把安装包和资源包一起找到，并提了出来。</p>
+</div>
+<div class="block paragraph" data-ctx="提取资源"><p>这里有一个小插曲，因为全部的资源过大，将近40个G，我中间自己还把模拟器给停掉了，后面又续上了。</p>
+</div>
+<div id="解包资源" class="block chapter-head keep" data-ctx="解包资源">
+      <div class="part">Part <em>02</em></div>
+      <h2>解包资源</h2></div>
+<div class="block paragraph" data-ctx="解包资源"><p>到这一步，其实以前在手工的时代，我自己都做过，网上还有针对这个游戏的教程，但是教程是针对老版本的，在游戏某个大版本之后，这个教程里的步骤就不好使了，包括里面的一些技巧。</p>
+</div>
+<div class="block paragraph" data-ctx="解包资源"><p>但我还是把这篇教程给了AI，让AI参考着来，这时AI展示了高超的逆向本领：它先是对比了文件头，发现新版本只是在每个资源文件前面垫了 8 个字节的 0，后面就是完完整整的标准的资源包，跳过这 8 个字节，现成的解包库就能直接读；然后发现资源分散在两处，安装包自带一份，游戏运行后又下载了一份更新，要按“更新覆盖原版”合起来才是完整的一套；连从模拟器拉文件都踩了个坑：Windows 下 adb pull 遇到中文文件名会出错，它改成在手机端打 tar 包、流式传回来再解开。最终成功地把资源提取了出来。</p>
+</div>
+<div id="资源映射" class="block chapter-head keep" data-ctx="资源映射">
+      <div class="part">Part <em>03</em></div>
+      <h2>资源映射</h2></div>
+<div class="block paragraph" data-ctx="资源映射"><p>从这里开始就是以前手动很麻烦的步骤，因为游戏中看到的都是名字，但是提取的资源使用的都是编号，于是我让AI去找一下在逆向出来的代码哪里存放了它们真实的名字。这是以前从来没有做到的。</p>
+</div>
+<div class="block paragraph" data-ctx="资源映射"><p>这时AI找到了它的加密数据库，分析出来它的加密算法，然后把数据库给解开了，整个游戏的资源映射关系就被它这样找到了。</p>
+</div>
+<div class="block shot-todo" data-ctx="资源映射"><div class="todo"><span>待补截图</span>解开的数据库和资源映射</div></div>
+<div class="block paragraph" data-ctx="资源映射"><p>它先注意到配置目录里有一批文件大小整齐、但打不开的数据库，逐字节比对后发现只是做了一层异或：0 字节和等于密钥的字节会原样跳过，连 SQLite 文件头里的页大小字段都被搅乱了，把这些还原之后就是普通的 SQLite，每条记录的值是一个前缀字节加一段 JSON；然后发现名字和描述在数据库里，但编号、类型这些另一半字段藏在 Lua 字节码的配置表里，它又写了个 Lua 字节码的读取工具把这一半也读了出来；最后按编号把两边拼起来，生成了一份“名字 → 编号 → 资源文件”的中文索引表，想看哪件东西直接按名字搜。</p>
+</div>
+<div class="block paragraph" data-ctx="资源映射"><p>这是已经比我手动的年代提高了一大部分。</p>
+</div>
+<div id="材质，贴图，Shader" class="block chapter-head keep" data-ctx="材质，贴图，Shader">
+      <div class="part">Part <em>04</em></div>
+      <h2>材质，贴图，Shader</h2></div>
+<div class="block paragraph" data-ctx="材质，贴图，Shader"><p>从这里开始，其实就是之前没有做过的了，这一次也让AI开始做，就是把这个游戏的材质，贴图，甚至是shader试着看看能不能给应用到导出的模型，答案是能，而且做得非常好，后面几乎所有的逆向都是以这一步作为基础去做的。</p>
+</div>
+<div class="block paragraph keep" data-ctx="材质，贴图，Shader"><p>它先在资源包的 Shader 对象里找到了游戏自带的、已经编译成 GLSL 的着色器代码。这些代码被一种自定义的分块格式压缩打包，一个 Shader 里有成百上千个变体，它解开之后，按材质上开的关键字挑出对应的那一个。然后它在网页里用 three.js 直接跑游戏的原版 GLSL：把 Unity 风格的 GLSL 转成 three.js 能编译的写法，把引擎每帧往 shader 里塞的全局参数（相机矩阵、主光、球谐环境光、阴影图等）按同样的名字补上，混合、剔除、深度写入这些渲染状态也照每个 pass 的设置来。最后是一个个坑地对齐画面：</p>
+</div>
+<div class="block list" data-ctx="材质，贴图，Shader"><ul>
+<li>Unity 是左手坐标系，镜像到 three.js 之后三角形绕序要翻过来；</li>
+<li>一个材质有好几个 pass 叠着画，要按层全画上；</li>
+<li>游戏是线性色彩空间，材质里的颜色要先从 sRGB 转成线性；</li>
+<li>阴影矩阵没设的时候全是 0，shader 里除以 0 出 NaN，整块发黑；</li>
+<li>某些顶点数据是 16 位整数存的，要先归一化。</li>
+</ul>
+</div>
+<div class="block paragraph" data-ctx="材质，贴图，Shader"><p>因为我自己做开发的时候也需要用到glsl代码，我开始认真对待起来。</p>
+</div>
+<div id="骨骼，蒙皮，动画" class="block chapter-head keep" data-ctx="骨骼，蒙皮，动画">
+      <div class="part">Part <em>05</em></div>
+      <h2>骨骼，蒙皮，动画</h2></div>
+<div class="block paragraph" data-ctx="骨骼，蒙皮，动画"><p>因为这个游戏自带了很多动作，还有动画，既然做到了这一步，那我接下来就想试一试，能不能把里面大量的动画给应用上来，同样的，没有问题。</p>
+</div>
+<div class="block paragraph" data-ctx="骨骼，蒙皮，动画"><p>它先发现动画曲线是压缩过的，暂时解不开，但每个片段里另外存了首帧和末帧的原始值。骨骼对应关系是按“骨骼路径的 CRC32 哈希”存的，它逐个算路径哈希对上骨骼，先用首帧把两千多个静态姿势还原了出来。</p>
+</div>
+<div class="block paragraph" data-ctx="骨骼，蒙皮，动画"><p>然后它把模型蒙皮挂到骨骼上。权重有的存成 16 位整数，有的只存了骨骼下标，都要统一归一化。模型由多个部件拼成，每个部件按“占哪个槽位、要隐藏哪些槽位”的规则决定显示哪些网格。有的部件是在另一套绑定姿势下做的，得把相关网格按那套绑定姿势重新蒙皮，再用一层叠加动画做微调。</p>
+</div>
+<div class="block paragraph" data-ctx="骨骼，蒙皮，动画"><p>最后是完整动画。它认出这种压缩格式就是开源的 ACL（Animation Compression Library），还对上了具体版本。拉下官方源码编成 DLL 给 Python 调，再把解出来的曲线对回骨骼；本地服务按需解码并缓存。同名的镜头片段也一起解出来，跟角色动作同步播放。</p>
+</div>
+<div class="block paragraph" data-ctx="骨骼，蒙皮，动画"><p>在做这步的时候，AI找到了压缩格式，然后自己下载源码、写好编译脚本，用我本机装的 MSVC 2019 Build Tools 编译了出来。</p>
+</div>
+<div id="镜头，运镜，场景，道具" class="block chapter-head keep" data-ctx="镜头，运镜，场景，道具">
+      <div class="part">Part <em>06</em></div>
+      <h2>镜头，运镜，场景，道具</h2></div>
+<div class="block paragraph" data-ctx="镜头，运镜，场景，道具"><p>因为游戏中有拍照的功能，所以说接下来我让它把镜头运镜相关的代码也给逆向了出来并添加了进去。</p>
+</div>
+<div class="block paragraph" data-ctx="镜头，运镜，场景，道具"><p>同时补上了场景以及道具相关的。</p>
+</div>
+<div class="block paragraph keep" data-ctx="镜头，运镜，场景，道具"><p>它先从镜头下手：</p>
+</div>
+<div class="block list" data-ctx="镜头，运镜，场景，道具"><ul>
+<li>动作和镜头动画是同名成对存放的，镜头动画是没压缩的曲线，记着镜头的位置、朝向和视角。Unity 是左手坐标系，搬到 three.js 要把位置的 x、四元数的 y 和 z 取反。</li>
+<li>过场用的 Timeline 被拆成了很多小包，它把里面 Cinemachine 的虚拟镜头（跟随点、看向点、视角、侧倾）逐帧算成普通镜头。</li>
+<li>真正的时间安排写在 Lua 字节码的时间轴配置里，它用符号执行把每段的起止帧和挂点读了出来。</li>
+<li>拍照镜头是几档预设按缩放程度插值出来的，也照着还原了。</li>
+</ul>
+</div>
+<div class="block paragraph keep" data-ctx="镜头，运镜，场景，道具"><p>然后是场景：</p>
+</div>
+<div class="block list" data-ctx="镜头，运镜，场景，道具"><ul>
+<li>环境预制体、光照贴图（每个渲染器各自的索引和缩放偏移）、光照探针（四面体重心插值）、平面反射，都按引擎的做法接上了。</li>
+<li>运行时生成的海面是逆向引擎代码还原的：网格没有顶点数据，靠 gl_VertexID 在 shader 里算位置，浪由一批“波粒子”画进贴图。</li>
+<li>用顶点动画贴图驱动的场景动画也接上了。</li>
+</ul>
+</div>
+<div class="block paragraph keep" data-ctx="镜头，运镜，场景，道具"><p>最后是道具：</p>
+</div>
+<div class="block list" data-ctx="镜头，运镜，场景，道具"><ul>
+<li>配置表写着“哪个动作把哪个预制体挂到哪根骨骼上”，道具有自己的骨骼和动画，动画用的是 Unity 标准的曲线格式，带显隐曲线。</li>
+</ul>
+</div>
+<div id="粒子特效" class="block chapter-head keep" data-ctx="粒子特效">
+      <div class="part">Part <em>07</em></div>
+      <h2>粒子特效</h2></div>
+<div class="block paragraph" data-ctx="粒子特效"><p>然后，就是质的飞跃，粒子特效。</p>
+</div>
+<div class="block paragraph" data-ctx="粒子特效"><p>本来我也没有想到可以做到这一步，但是AI自己说还没有做的时候，我就问了它一句是不是可以去做，然后它做了简单的调查后，说可以，接着就给做出来了，同样的是把游戏里等价的源码给逆向了出来。</p>
+</div>
+<div class="block paragraph" data-ctx="粒子特效"><p>它先解决了读取的问题：粒子系统的序列化格式被改过，头部多了一个模块掩码，只有掩码里标了的模块才会完整写入，其余模块只剩一个开关位。现成的解包库照标准格式读，会直接读越界。它摸清规则后自己写了读取器，一千七百多个粒子系统全部读对。</p>
+</div>
+<div class="block paragraph" data-ctx="粒子特效"><p>然后在浏览器里重写了模拟：发射、各种发射形状、随生命周期变化的速度 / 大小 / 颜色、序列帧、子发射器、拖尾都做了。粒子数据按引擎的顶点流规则打包，直接喂给游戏自己的特效 shader。</p>
+</div>
+<div class="block paragraph" data-ctx="粒子特效"><p>最后是逐点对齐：像噪声这种公开资料写不清楚的模块，它直接反汇编引擎的二进制，用 CPU 模拟器跑原函数，和自己的实现对拍，直到输出一模一样。</p>
+</div>
+<div class="block paragraph" data-ctx="粒子特效"><p>到这一步，才过去不到一个小时。</p>
+</div>
+<div class="block paragraph" data-ctx="粒子特效"><p>当把粒子特效实现进去的时候，整个游戏的效果已经和我在游戏里看到的几乎一模一样了。</p>
+</div>
+<div id="碰撞，布料模拟" class="block chapter-head keep" data-ctx="碰撞，布料模拟">
+      <div class="part">Part <em>08</em></div>
+      <h2>碰撞，布料模拟</h2></div>
+<div class="block paragraph" data-ctx="碰撞，布料模拟"><p>我以为这就到头了，我以为接下来这些在外部端就做不了了。我这么问 AI 的时候，它一开始并没有直接说可以做，而是给了两个选项：第一个是做一个近似的，第二个是完全逆向出游戏本身的源码。我就直接让它按第二个做了，然后它就做出来了。</p>
+</div>
+<div class="block paragraph keep" data-ctx="碰撞，布料模拟"><p>它先找到了物理参数：每个部件的物理配置存在一个资源文件里，全局还有一套身体碰撞胶囊和驱动骨骼。然后它去啃求解器：游戏的物理跑在 Unity 的 Burst 编译代码里，这个库带着完整的符号表，它用 Ghidra 批量反编译；C# 那一层是 IL2CPP，元数据文件被混淆过，现成的 Il2CppDumper 用不了，它自己写了一个 dumper 解开。最后按反编译结果用 JS 重写了一遍求解器，函数名和游戏里一一对应，包括：</p>
+</div>
+<div class="block list" data-ctx="碰撞，布料模拟"><ul>
+<li>固定子步长和两种积分方式；</li>
+<li>刚度、弯曲、长度约束；</li>
+<li>带噪声的风；</li>
+<li>粒子和胶囊、平面、网格的碰撞；</li>
+</ul>
+</div>
+<div id="灯光" class="block chapter-head keep" data-ctx="灯光">
+      <div class="part">Part <em>09</em></div>
+      <h2>灯光</h2></div>
+<div class="block paragraph" data-ctx="灯光"><p>做到这步，应该没什么能难住它的了。我问它还有什么没做，它说还有灯光，那我说好，把灯光也做了吧。</p>
+</div>
+<div class="block paragraph" data-ctx="灯光"><p>它先找到了灯光数据的真正来源：资源里有一套旧的灯光资源文件，但游戏实际用的是另一套写在 Lua 字节码配置里的灯光预设。它用自己写的 Lua 反汇编器把这些预设读了出来。</p>
+</div>
+<div class="block paragraph" data-ctx="灯光"><p>然后是换算：它对着逆向出来的代码，把每个预设里的主光、角色补光、球谐环境光、反射球，逐项换算成 shader 里对应的全局参数。颜色要按线性色彩空间处理，球谐系数要从引擎内部格式重新打包。过场动画里每个镜头换一套灯，时间也从时间轴配置里读。</p>
+</div>
+<div class="block paragraph" data-ctx="灯光"><p>最后是后期：游戏用的是 URP 的后期体积，但后期 shader 不在资源包里，而是藏在安装包的引擎数据里，而且没有类型信息。它借资源包里 Shader 对象的类型定义把它们读了出来，于是 Bloom、调色 LUT、色调映射这些都直接跑游戏的原版代码，参数换算也对着反编译的 C# 一项项核过。</p>
+</div>
+<div id="其他细节" class="block chapter-head keep" data-ctx="其他细节">
+      <div class="part">Part <em>10</em></div>
+      <h2>其他细节</h2></div>
+<div class="block paragraph keep" data-ctx="其他细节"><p>到此为止，我相信只要我想，我可以让AI把这个游戏里面全部的内容都扒出来。比如后来我们又陆续做了：</p>
+</div>
+<div class="block list" data-ctx="其他细节"><ul>
+<li>屏幕空间次表面散射；</li>
+<li>近景阴影和自发光；</li>
+<li>眨眼和“看镜头”；</li>
+<li>跟着动作走的模型显隐；</li>
+<li>场景雾和背景视差；</li>
+<li>配乐和音效；</li>
+<li>场景实时灯和渲染层过滤；</li>
+<li>最后把蒙皮从 CPU 挪到 GPU，重场景从十几帧提到了 60 帧。</li>
+</ul>
+</div>
+<div class="block paragraph" data-ctx="其他细节"><p>这些细节。</p>
+</div>
+<div id="后记" class="block chapter-head keep" data-ctx="后记">
+      <div class="part"><em>✦</em></div>
+      <h2>后记</h2></div>
+<div class="block paragraph" data-ctx="后记"><p>“坚决支持限制AI发展！”</p>
+</div>
+<div class="block paragraph" data-ctx="后记"><p>我在群里戏谑道。</p>
+</div>
+<div class="block paragraph" data-ctx="后记"><p>当然，有很大程度的开玩笑意味在这里面。</p>
+</div>
+<div class="block paragraph" data-ctx="后记"><p>不过之所以发出这样的感慨，是因为我用AI把一款玩了很久的游戏给逆向破解了，源码级别的。</p>
+</div>
+<div class="block paragraph" data-ctx="后记"><p>它…有点太夸张了，这个游戏最核心的源码就在弹指间，被还原出来了，可以建私服的程度。</p>
+</div>
+<div class="block paragraph keep" data-ctx="后记"><p>我实在忍不住不分享，提笔开始写《如何使用AI逆向一款游戏》这篇文章，以及开玩笑地呼吁：</p>
+</div>
+<div class="block paragraph" data-ctx="后记"><p>“坚决支持限制AI发展！”</p>
+</div>
+<div class="block end" data-ctx="后记"><em>✦</em> 完</div>
+</main>
+<div id="pages" data-brand="Terry 的文章" data-lesson="如何使用AI逆向一款游戏"></div>
+<script>(() => {
+  const pagesMode = new URLSearchParams(location.search).get('mode') === 'pages'
+
+  // 短列（每格都不超过 8 字）不换行，长列给个最小宽度，免得被挤成一字一行
+  for (const table of document.querySelectorAll('table')) {
+    const rows = [...table.rows]
+    const n = rows[0]?.cells.length ?? 0
+    for (let c = 0; c < n; c++) {
+      const cells = rows.map((r) => r.cells[c]).filter(Boolean)
+      const short = Math.max(...cells.map((x) => x.textContent.trim().length)) <= 8
+      cells.forEach((x) => { if (short) x.style.whiteSpace = 'nowrap'; else x.style.minWidth = '6.5em' })
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.copy')
+    if (!btn) return
+    navigator.clipboard.writeText(btn.previousElementSibling.textContent).then(() => {
+      btn.textContent = '已复制'
+      setTimeout(() => { btn.textContent = '复制' }, 1400)
+    })
+  })
+
+  if (!pagesMode) {
+    const links = [...document.querySelectorAll('.toc a')]
+    const heads = links.map((a) => document.querySelector(a.getAttribute('href')))
+    const io = new IntersectionObserver((entries) => {
+      for (const en of entries) {
+        if (!en.isIntersecting) continue
+        const i = heads.indexOf(en.target)
+        links.forEach((a, j) => a.classList.toggle('active', j === i))
+      }
+    }, { rootMargin: '0px 0px -70% 0px' })
+    heads.forEach((h) => h && io.observe(h))
+    return
+  }
+
+  document.documentElement.dataset.mode = 'pages'
+  const root = document.getElementById('pages')
+  const blocks = [...document.querySelectorAll('#article > .block')]
+  const pages = []
+
+  function newPage() {
+    const page = document.createElement('section')
+    page.className = 'page'
+    page.innerHTML = `
+      <div class="page-top"><b>${root.dataset.brand}</b><span></span></div>
+      <div class="page-body"></div>
+      <div class="page-foot"><span>${root.dataset.lesson}</span><em></em></div>`
+    root.appendChild(page)
+    pages.push(page)
+    return page.querySelector('.page-body')
+  }
+
+  const overflows = (body) => body.scrollHeight > body.clientHeight + 1
+
+  function fitAlone(body, block) {
+    const img = block.querySelector('.frame img')
+    if (img) {
+      const extra = block.offsetHeight - img.offsetHeight
+      img.style.maxHeight = `${body.clientHeight - extra}px`
+      img.style.width = 'auto'
+      img.style.margin = '0 auto'
+      block.querySelector('.frame').style.width = 'fit-content'
+      block.querySelector('.frame').style.margin = '0 auto'
+    }
+    if (overflows(body)) block.style.zoom = String(body.clientHeight / block.scrollHeight)
+  }
+
+  // 表格太长时按行拆：当前页留下放得下的行，其余行带着表头接到下一页
+  function splitTable(body, block) {
+    const tbody = block.querySelector('tbody')
+    if (!tbody || tbody.rows.length < 2) return null
+    const moved = []
+    while (overflows(body) && tbody.rows.length > 1) {
+      moved.unshift(tbody.lastElementChild)
+      tbody.lastElementChild.remove()
+    }
+    if (overflows(body) || !moved.length) {
+      tbody.append(...moved)
+      return null
+    }
+    const rest = block.cloneNode(true)
+    rest.removeAttribute('id')
+    rest.classList.add('cont')
+    rest.querySelector('tbody').replaceChildren(...moved)
+    return rest
+  }
+
+  async function paginate() {
+    await document.fonts.ready
+    await Promise.all([...document.images].map((img) => img.decode().catch(() => {})))
+
+    const queue = blocks.filter((b) => !b.classList.contains('web-only'))
+    let body = newPage()
+    while (queue.length) {
+      const block = queue.shift()
+      body.appendChild(block)
+      if (!overflows(body)) continue
+      // 结尾标记放不下就不要了，不为它单开一页
+      if (block.classList.contains('end') && body.children.length > 1) { block.remove(); continue }
+
+      if (block.classList.contains('table')) {
+        const rest = splitTable(body, block)
+        if (rest) { queue.unshift(rest); body = newPage(); continue }
+      }
+      if (body.children.length === 1) { fitAlone(body, block); continue }
+
+      const carry = [block]
+      block.remove()
+      while (body.lastElementChild?.classList.contains('keep') && body.children.length > 1) {
+        carry.unshift(body.lastElementChild)
+        body.lastElementChild.remove()
+      }
+      body = newPage()
+      queue.unshift(...carry)
+    }
+
+    pages.forEach((page, i) => {
+      const first = page.querySelector('.page-body > .block')
+      page.querySelector('.page-top span').textContent = first?.dataset.ctx ?? ''
+      page.querySelector('.page-foot em').innerHTML =
+        `${String(i + 1).padStart(2, '0')}<small> / ${String(pages.length).padStart(2, '0')}</small>`
+    })
+    window.__pagesReady = true
+  }
+
+  paginate()
+})()
+</script>
+</body>
+</html>
