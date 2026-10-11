@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>写给那个属于AI绘画的田园牧歌年代</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,600&family=Noto+Serif+SC:wght@600;900&display=block" rel="stylesheet">
+<style>:root {
+  --paper: #f5f1e9;
+  --paper-2: #ece5d8;
+  --ink: #1b1916;
+  --ink-2: #48433b;
+  --muted: #8c8478;
+  --rule: #ddd3c3;
+  --accent: #c2412a;
+  --accent-soft: #f5e1d8;
+  --warn: #a8691a;
+  --warn-soft: #f6ead3;
+  --code: #1e1c19;
+  --serif: "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --sans: "HarmonyOS Sans SC", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --num: "Fraunces", Georgia, serif;
+  --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .35  0 0 0 0 .28  0 0 0 0 .2  0 0 0 .07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  font-size: 17px;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper) var(--grain);
+  font-family: var(--sans);
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+a { color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); }
+em { font-style: normal; }
+
+#article { max-width: 46rem; margin: 0 auto; padding: 5rem 1.5rem 7rem; }
+#pages { display: none; }
+
+.toc {
+  position: fixed; top: 5.5rem; left: max(1.5rem, calc(50vw - 46rem));
+  width: 12rem; display: none; flex-direction: column; gap: .15rem;
+  font-size: .82rem;
+}
+.toc-title { font-family: var(--serif); font-weight: 900; color: var(--ink); margin-bottom: .6rem; letter-spacing: .06em; }
+.toc a {
+  display: flex; gap: .6rem; align-items: baseline; border: 0; color: var(--muted);
+  padding: .3rem 0 .3rem .7rem; border-left: 2px solid var(--rule); transition: color .2s, border-color .2s;
+}
+.toc a em { font-family: var(--num); font-style: italic; font-size: .9rem; color: inherit; min-width: 1.3rem; }
+.toc a:hover, .toc a.active { color: var(--ink); border-left-color: var(--accent); }
+@media (min-width: 1280px) { .toc { display: flex; } }
+
+.block { margin-top: 1.4rem; }
+.block > :first-child { margin-top: 0; }
+.block > :last-child { margin-bottom: 0; }
+p { margin: 0; }
+strong { font-weight: 700; color: var(--ink); background: linear-gradient(transparent 62%, color-mix(in srgb, var(--accent) 16%, transparent) 62%); }
+
+.hero { position: relative; margin: 0 0 1.8rem; padding-top: 1rem; }
+.hero-num {
+  position: absolute; right: -.2rem; top: -1.6rem; z-index: 0;
+  font-family: var(--num); font-style: italic; font-weight: 600; font-size: 8rem; line-height: 1;
+  color: transparent; -webkit-text-stroke: 1.5px color-mix(in srgb, var(--accent) 45%, transparent);
+  letter-spacing: -.04em; user-select: none;
+}
+.hero-kicker {
+  position: relative; display: flex; align-items: center; gap: .7rem;
+  color: var(--accent); font-weight: 700; font-size: .9rem; letter-spacing: .32em;
+}
+.hero-kicker span { width: 2.2rem; height: 2px; background: var(--accent); }
+.hero h1 {
+  position: relative; margin: .9rem 0 0;
+  font-family: var(--serif); font-weight: 900; font-size: 2.45rem; line-height: 1.32; letter-spacing: .01em;
+}
+.hero-meta { position: relative; margin-top: 1rem; font-size: .85rem; color: var(--muted); letter-spacing: .12em; }
+.lead { font-size: 1.1rem; color: var(--ink-2); line-height: 1.95; padding-left: 1.1rem; border-left: 3px solid var(--accent); }
+
+.chapter-head { margin-top: 4.2rem; padding-bottom: .9rem; border-bottom: 1px solid var(--rule); position: relative; }
+.chapter-head::after { content: ""; position: absolute; left: 0; bottom: -2px; width: 3.2rem; height: 3px; background: var(--ink); }
+.part { font-family: var(--num); font-size: .95rem; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.part em { font-style: italic; font-weight: 600; color: var(--accent); font-size: 1.35rem; margin-left: .2rem; letter-spacing: 0; }
+.chapter-head h2 { margin: .15rem 0 0; font-family: var(--serif); font-weight: 900; font-size: 1.85rem; line-height: 1.35; }
+
+.step-head { display: flex; align-items: center; gap: .85rem; margin-top: 2.6rem; }
+.step-dot {
+  flex: none; width: 2.3rem; height: 2.3rem; border-radius: 50%;
+  display: grid; place-items: center; background: var(--accent); color: #fff;
+  box-shadow: 0 0 0 5px var(--paper), 0 0 0 6px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.step-dot em { font-family: var(--num); font-style: italic; font-weight: 600; font-size: 1.15rem; line-height: 1; transform: translateY(-1px); }
+.step-head h3 { margin: 0; font-size: 1.28rem; font-weight: 700; line-height: 1.4; display: flex; flex-direction: column; }
+.step-head h3 small { font-size: .74rem; font-weight: 500; color: var(--muted); letter-spacing: .18em; }
+
+.block.in-step:not(.step-head) {
+  margin-top: 0; padding-top: 1.25rem; padding-left: 3.15rem; position: relative;
+}
+.block.in-step:not(.step-head)::before {
+  content: ""; position: absolute; left: 1.15rem; top: 0; bottom: 0;
+  border-left: 1.5px dashed var(--rule);
+}
+
+.substep p { display: flex; align-items: center; gap: .6rem; font-size: 1.08rem; }
+.substep p::before { content: ""; width: .5rem; height: .5rem; background: var(--accent); transform: rotate(45deg); flex: none; }
+.substep strong { background: none; }
+.block.substep:not(.in-step) { margin-top: 2rem; }
+
+ul, ol { margin: 0; padding-left: 1.3rem; }
+li { margin: .35rem 0; }
+li::marker { color: var(--accent); }
+
+.figure figure { margin: 0; }
+.frame {
+  border-radius: 14px; overflow: hidden; background: #111;
+  box-shadow: 0 0 0 1px rgba(27, 25, 22, .1), 0 2px 4px rgba(40, 30, 20, .06), 0 22px 44px -22px rgba(40, 30, 20, .45);
+}
+.frame img { display: block; width: 100%; height: auto; }
+figcaption { margin-top: .7rem; font-size: .84rem; color: var(--muted); display: flex; gap: .6rem; align-items: baseline; }
+figcaption em { font-family: var(--num); font-style: italic; font-weight: 600; color: var(--accent); white-space: nowrap; }
+
+.callout .callout-label {
+  display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .2em;
+  padding: .05rem .55rem; border-radius: 99px; margin-bottom: .45rem;
+}
+.callout-box { border-radius: 12px; padding: 1rem 1.2rem; font-size: .95rem; line-height: 1.85; }
+.callout-box p + p { margin-top: .5rem; }
+.callout.note .callout-box { background: var(--paper-2); }
+.callout.note .callout-label { background: var(--ink); color: var(--paper); }
+.callout.warn .callout-box { background: var(--warn-soft); box-shadow: inset 3px 0 0 var(--warn); }
+.callout.warn .callout-label { background: var(--warn); color: #fff; }
+
+.code pre {
+  position: relative; margin: 0; padding: 1.1rem 1.3rem; border-radius: 12px;
+  background: var(--code); color: #efe6d6; font-family: var(--mono); font-size: .86rem; line-height: 1.75;
+  white-space: pre-wrap; word-break: break-all;
+}
+.copy {
+  position: absolute; top: .55rem; right: .6rem; border: 1px solid #45403a; background: transparent; color: #b6ab99;
+  font: 600 .7rem var(--sans); padding: .2rem .6rem; border-radius: 6px; cursor: pointer;
+}
+.copy:hover { color: #fff; border-color: #807565; }
+code { font-family: var(--mono); font-size: .88em; background: var(--paper-2); padding: .08em .4em; border-radius: 5px; color: var(--ink); }
+pre code { background: none; padding: 0; color: inherit; }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .92rem; line-height: 1.6; }
+th {
+  text-align: left; font-size: .74rem; font-weight: 700; letter-spacing: .14em; color: var(--muted);
+  padding: .5rem .75rem; border-bottom: 1.5px solid var(--ink);
+}
+td { padding: .7rem .75rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+td:first-child { font-weight: 600; }
+
+.end { margin-top: 3.5rem; display: flex; align-items: center; gap: 1rem; color: var(--muted); font-size: .8rem; letter-spacing: .3em; }
+.end::before, .end::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+.end em { font-family: var(--num); font-style: italic; color: var(--accent); letter-spacing: 0; font-size: 1.1rem; }
+
+.todo {
+  display: flex; gap: .8rem; align-items: center; padding: 1.1rem 1.2rem; border-radius: 12px;
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, transparent); color: var(--ink-2); font-size: .9rem;
+  background: repeating-linear-gradient(-45deg, transparent 0 10px, color-mix(in srgb, var(--accent) 5%, transparent) 10px 20px);
+}
+.todo span { flex: none; font-size: .72rem; font-weight: 700; letter-spacing: .16em; color: var(--accent); }
+
+html[data-mode="pages"] { font-size: 21px; }
+html[data-mode="pages"] body { background: #cfc7b8; }
+html[data-mode="pages"] .toc, html[data-mode="pages"] #article { display: none; }
+html[data-mode="pages"] #pages { display: flex; flex-direction: column; align-items: center; gap: 40px; padding: 40px 0; }
+html[data-mode="pages"] .copy { display: none; }
+
+.page {
+  width: 1080px; height: 1440px; flex: none; position: relative; overflow: hidden;
+  display: flex; flex-direction: column; padding: 58px 78px 50px;
+  background: var(--paper) var(--grain);
+}
+.page::before { content: ""; position: absolute; left: 0; top: 0; right: 0; height: 8px; background: var(--accent); }
+.page-top, .page-foot {
+  flex: none; display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 15px; color: var(--muted); letter-spacing: .08em;
+}
+.page-top { padding-bottom: 18px; border-bottom: 1px solid var(--rule); }
+.page-top b { color: var(--ink); font-weight: 700; letter-spacing: .12em; }
+.page-top span { max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.page-body { flex: 1; min-height: 0; overflow: hidden; padding-top: 34px; }
+.page-body > .block:first-child:not(.in-step) { margin-top: 0; }
+.page-body > .block.in-step:first-child:not(.step-head) { padding-top: 0; }
+.page-body > .hero:first-child { margin-top: 60px; }
+.page-foot { padding-top: 16px; border-top: 1px solid var(--rule); }
+.page-foot em { font-family: var(--num); font-style: italic; font-weight: 600; font-size: 22px; color: var(--ink); letter-spacing: 0; }
+.page-foot em small { font-size: 15px; color: var(--muted); }
+
+/* README 写法补充 */
+.langs { font-size: .85rem; color: var(--muted); letter-spacing: .04em; }
+.langs a { color: var(--ink-2); }
+.sub-head h3, .sub-head h4 { margin: 0; line-height: 1.45; }
+.sub-head.d3 { margin-top: 2.6rem; }
+.sub-head.d3 h3 { font-family: var(--serif); font-weight: 900; font-size: 1.32rem; display: flex; align-items: center; gap: .65rem; }
+.sub-head.d3 h3::before { content: ""; width: .55rem; height: 1.15rem; background: var(--accent); flex: none; }
+.sub-head.d4 { margin-top: 1.7rem; }
+.sub-head.d4 h4 { font-size: 1rem; font-weight: 700; color: var(--ink-2); display: flex; align-items: center; gap: .55rem; }
+.sub-head.d4 h4::before { content: ""; width: .45rem; height: .45rem; background: var(--accent); transform: rotate(45deg); flex: none; }
+.sub-head code { font-size: .85em; }
+td code, th code { white-space: nowrap; font-size: .82em; }
+td:first-child { min-width: 9.5em; }
+.lead + .paragraph, .lead + .langs { margin-top: 1.1rem; }
+html[data-mode="pages"] .web-only { display: none; }
+.page-body > .block.sub-head:first-child, .page-body > .block.table.cont:first-child { margin-top: 0; }
+
+/* 文章站 */
+.home { display: inline-block; margin-bottom: 2rem; font-size: .85rem; color: var(--muted); border: 0; letter-spacing: .12em; }
+.home::before { content: "← "; }
+.home:hover { color: var(--accent); }
+.hero-num ~ h1 { max-width: 82%; }
+</style>
+</head>
+<body>
+<nav class="toc" aria-label="章节">
+  <div class="toc-title">写给那个属于AI绘画的田园牧歌年代</div>
+  
+</nav>
+<main id="article">
+<a class="home" href="../">全部文章</a>
+<header class="block hero" data-ctx="">
+      
+      
+      <h1>写给那个属于AI绘画的田园牧歌年代</h1>
+      <div class="hero-meta">Terry · 2026-10-10</div>
+    </header>
+<div class="block lead" data-ctx=""><p>（本来这是要给数字生命卡兹克的文章《今天，好像见证了属于SD时代的消亡》的留言，结果发现想写的有点多，单独成文吧）</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>周末参加活动的时候，有两个标签硬是被我贴在了自己的身上：小红书和AI。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>前者之前说过了，我硬是把自己塑造成了小红书博主。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>但后者其实想说能说的更多，这些年大部分精力确实投入在了“玩AI”。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>对于一般人而言，这波AI的起点可能是ChatGPT或是DeepSeek。但对于我来说，起点来的要稍早一些，是一款Disco Diffusion的AI绘图软件。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>当时还在画画，还在混画画群。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>我在一个清晨用Google Colab配好了Disco Diffusion，跑出了人生第一张AI生成的图片，然后极其兴奋把图转到画画群里，那是一张海边的灯塔。</p>
+</div>
+<div class="block figure" data-ctx=""><figure>
+      <div class="frame"><img src="img/01.jpg" alt="人生第一张 AI 生成的图：海边的灯塔"></div>
+      <figcaption><em>图 1</em>人生第一张 AI 生成的图：海边的灯塔</figcaption>
+    </figure></div>
+<div class="block paragraph" data-ctx=""><p>今天回想都有点后怕，因为绘画圈和AI工具现在是完全敌对的状态…（你可能看过这个图，no AI）</p>
+</div>
+<div class="block figure" data-ctx=""><figure>
+      <div class="frame"><img src="img/02.jpg" alt="禁止 AI 声明"></div>
+      <figcaption><em>图 2</em>禁止 AI 声明</figcaption>
+    </figure></div>
+<div class="block paragraph" data-ctx=""><p>但在那个时点大家都不知道未来会发生什么，而我作为画画为爱好，但本职程序员，就这么跨进还在混沌的AI圈。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>接下来就是到了Stable diffusion webui的年代。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>和2000年初美好早期的互联网一样，我愿称那时为“AI绘画的田园牧歌”。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>因为sd1.5对配置的低要求，整个圈子完全是自由，狂热，那是属于开源的狂欢。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>各种风格的模型层出不穷，每天的乐趣就是逛C站，下模型。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>我从那时也开始在小红书发发经验笔记，虽然赶不上卡兹克提到的那些大佬大V们，但也算是给我累计了初始的一部分粉丝。</p>
+</div>
+<div class="block figure" data-ctx=""><figure>
+      <div class="frame"><img src="img/03.jpg" alt="小红书笔记：Stable Diffusion 神器插件 ControlNet 测评"></div>
+      <figcaption><em>图 3</em>小红书笔记：Stable Diffusion 神器插件 ControlNet 测评</figcaption>
+    </figure></div>
+<div class="block paragraph" data-ctx=""><p>同时因为我自己本职工作是程序员，而sd-webui当时就已经有相当繁荣的插件生态，我开始给它写插件，以开源贡献者的身份去混迹于这个社区。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>其中自己的sd 3d model loader的项目对我影响至今，甚至可以说某种程度改变了我的职业规划。</p>
+</div>
+<div class="block figure" data-ctx=""><figure>
+      <div class="frame"><img src="img/04.jpg" alt="Stable Diffusion WebUI 3D Model&amp;Pose Loader"></div>
+      <figcaption><em>图 4</em>Stable Diffusion WebUI 3D Model&amp;Pose Loader</figcaption>
+    </figure></div>
+<div class="block paragraph" data-ctx=""><p>sd-webui玩了一段时间，插件也做了几个。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>虽然说sd-webui算是新手友好的程序，但对我来说，它底层用的叫Gradio这个一言难尽的东西，程序写起来异常的难受。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>同时整个社区也好像在不约而同的等着一个新的UI界面的到来。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>ComfyUI如约而至。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>第一次跑ComfyUI，直观感觉就是快，比sd-webui快好多。并且那时就已经有让新手又爱又恨的自定义节点生态，而我继续发挥自己程序员的特长，开始写ComfyUI的插件。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>我自己除了AI，3D也是一大爱好，自己建模，搞3D打印。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>所以从有AI生成3D模型开始就一直追这块的发展，为那些开源的AI生3D的技术写ComfyUI的插件。</p>
+</div>
+<div class="block figure" data-ctx=""><figure>
+      <div class="frame"><img src="img/05.jpg" alt="小红书笔记：Unique3D 的 ComfyUI 移植"></div>
+      <figcaption><em>图 5</em>小红书笔记：Unique3D 的 ComfyUI 移植</figcaption>
+    </figure></div>
+<div class="block paragraph" data-ctx=""><p>因为这些开源的插件，被朋友拉到WayToAGI的主群，里面全是那些在网上如雷贯耳的名字，这让我有了真的完全混进了这个圈子的感觉。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>与此同时，外面的世界也更强烈的感受到了AI带来的狂风骤雨。一个不可不说的就是绘画圈和AI工具的完全对立，其中以敏神开源的PaintsUndo作为一个标志事件，之前写过《“你们和画画的有仇吗”—PaintsUndo》，感兴趣的朋友可以找来看看。</p>
+</div>
+<div class="block figure" data-ctx=""><figure>
+      <div class="frame"><img src="img/06.jpg" alt="小红书笔记：“你们跟画画的有仇吗”"></div>
+      <figcaption><em>图 6</em>小红书笔记：“你们跟画画的有仇吗”</figcaption>
+    </figure></div>
+<div class="block paragraph" data-ctx=""><p>当时还想以这个氛围写一篇短篇小说，名字就叫《终于，你也放下了画笔》，写了一半烂尾了…</p>
+</div>
+<div class="block figure" data-ctx=""><figure>
+      <div class="frame"><img src="img/07.jpg" alt="没写完的《终于，你也放下了画笔》"></div>
+      <figcaption><em>图 7</em>没写完的《终于，你也放下了画笔》</figcaption>
+    </figure></div>
+<div class="block paragraph" data-ctx=""><p>回到ComfyUI上。</p>
+</div>
+<div class="block paragraph keep" data-ctx=""><p>好像一切都是宿命的安排。去年的某天在推上看到这么一篇推文：</p>
+</div>
+<div class="block figure" data-ctx=""><figure>
+      <div class="frame"><img src="img/08.jpg" alt="Chenlei Hu 的推文"></div>
+      <figcaption><em>图 8</em>Chenlei Hu 的推文</figcaption>
+    </figure></div>
+<div class="block paragraph" data-ctx=""><p>当天脑子一热，截图转发到微信群里，问有没有人认识这位大佬，想认识一下，结果真的被瓜哥发来的微信。他就是HCL，ComfyUI前端库的创始人和奠基人。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>刚加HCL的时候其实也没什么想法，没怎么聊天。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>直到那时在给腾讯的混元3D 1代做ComfyUI插件的时候，苦于ComfyUI没有原生的3D显示节点，必须要再让用户装一遍3D pack，这个ComfyUI生态中最难安装的插件，才能看到效果，这时就萌发了给ComfyUI做个原生的3D显示节点的想法。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>当天就去问HCL这个想法是否可行，在得到肯定答复后，立即开干。</p>
+</div>
+<div class="block figure" data-ctx=""><figure>
+      <div class="frame"><img src="img/09.jpg" alt="和 HCL 的聊天记录"></div>
+      <figcaption><em>图 9</em>和 HCL 的聊天记录</figcaption>
+    </figure></div>
+<div class="block figure" data-ctx=""><figure>
+      <div class="frame"><img src="img/10.jpg" alt="朋友圈：3D 节点的早期界面"></div>
+      <figcaption><em>图 10</em>朋友圈：3D 节点的早期界面</figcaption>
+    </figure></div>
+<div class="block paragraph" data-ctx=""><p>给ComfyUI做3D节点这件事对我个人的重要程度怎么形容都不为过。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>一方面这是因为这个小小的节点，竟然让我有了一点点的“名气”，做的东西会被千万人看到，用到，甚至会被邀请参加社区活动，当嘉宾演讲。</p>
+</div>
+<div class="block figure" data-ctx=""><figure>
+      <div class="frame"><img src="img/11.jpg" alt="朋友圈：受邀参加混元 3D 2.1 线上直播"></div>
+      <figcaption><em>图 11</em>朋友圈：受邀参加混元 3D 2.1 线上直播</figcaption>
+    </figure></div>
+<div class="block paragraph" data-ctx=""><p>另一方面，因为它，我被ComfyUI官方收编成了ComfyUI官方开发者，还会做一些3D节点外的东西，这让我有机会从内部，同时还可以保持独立开发者的身份去审视这一波改变众多人命运的AI浪潮。</p>
+</div>
+<div class="block figure" data-ctx=""><figure>
+      <div class="frame"><img src="img/12.jpg" alt="小红书笔记：《写在 ComfyUI 原生支持混元 3D 后》"></div>
+      <figcaption><em>图 12</em>小红书笔记：《写在 ComfyUI 原生支持混元 3D 后》</figcaption>
+    </figure></div>
+<div class="block paragraph" data-ctx=""><p>在这一过程中，见证了ComfyUI这一年来完整的生态变化，看着它由“AI绘画平台”进化成“AI平台”的全过程：各类视频/音频/3D模型生成的支持，API节点，A轮融资，未来云端版本的支持，以及是如何被骂…</p>
+</div>
+<div class="block figure" data-ctx=""><figure>
+      <div class="frame"><img src="img/13.jpg" alt="小红书笔记：《ComfyUI 的“原罪”》"></div>
+      <figcaption><em>图 13</em>小红书笔记：《ComfyUI 的“原罪”》</figcaption>
+    </figure></div>
+<div class="block paragraph" data-ctx=""><p>事实上，就像卡兹克在文章里的一个形容“明明只有两年，却给了人好像过了十年的感觉”，整个的AI开源社区已经和当初sd1.5时期不太一样了。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>越来越多强大如Flux dev，nano banana的多模态模型让用户争论ComfyUI会不会淘汰，很多公司在通过开源累计了初始用户，攒够名气后，慢慢走向封闭。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>甚至连ComfyUI自身也在不断探索商业化的途径。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>当然，这些变化无所谓对错，他们只是变化而已。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>在这个被观察者形容为“AI泡沫是当年互联网泡沫的二十倍”的时代，就好像影视飓风的Tim在接受老罗的访问时认为，AI在他所在领域带来全面冲击只有两年不到的窗口期一样，除了像我这种AI玩家外，每个人也都将感受它带来的变化，无论是好的，还是坏的，无论你愿不愿意接受它，它已经来了。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>只是，我会怀念那个“AI绘画的田园牧歌”时期。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>PS，周五活动的时候遇到一个20出头的小哥，想学AI，在B站看到过ComfyUI，说想学一下。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>然后昨天晚上帮他远程配了下环境，他给我发来的感谢。</p>
+</div>
+<div class="block paragraph" data-ctx=""><p>这也是为什么我，或是说我们要贡献开源社区的情感需求。</p>
+</div>
+<div class="block figure" data-ctx=""><figure>
+      <div class="frame"><img src="img/14.jpg" alt="小哥发来的感谢"></div>
+      <figcaption><em>图 14</em>小哥发来的感谢</figcaption>
+    </figure></div>
+<div class="block paragraph" data-ctx=""><p>开源必胜，Open source will win。</p>
+</div>
+<div class="block end" data-ctx=""><em>✦</em> 完</div>
+</main>
+<div id="pages" data-brand="Terry 的文章" data-lesson="写给那个属于AI绘画的田园牧歌年代"></div>
+<script>(() => {
+  const pagesMode = new URLSearchParams(location.search).get('mode') === 'pages'
+
+  // 短列（每格都不超过 8 字）不换行，长列给个最小宽度，免得被挤成一字一行
+  for (const table of document.querySelectorAll('table')) {
+    const rows = [...table.rows]
+    const n = rows[0]?.cells.length ?? 0
+    for (let c = 0; c < n; c++) {
+      const cells = rows.map((r) => r.cells[c]).filter(Boolean)
+      const short = Math.max(...cells.map((x) => x.textContent.trim().length)) <= 8
+      cells.forEach((x) => { if (short) x.style.whiteSpace = 'nowrap'; else x.style.minWidth = '6.5em' })
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.copy')
+    if (!btn) return
+    navigator.clipboard.writeText(btn.previousElementSibling.textContent).then(() => {
+      btn.textContent = '已复制'
+      setTimeout(() => { btn.textContent = '复制' }, 1400)
+    })
+  })
+
+  if (!pagesMode) {
+    const links = [...document.querySelectorAll('.toc a')]
+    const heads = links.map((a) => document.querySelector(a.getAttribute('href')))
+    const io = new IntersectionObserver((entries) => {
+      for (const en of entries) {
+        if (!en.isIntersecting) continue
+        const i = heads.indexOf(en.target)
+        links.forEach((a, j) => a.classList.toggle('active', j === i))
+      }
+    }, { rootMargin: '0px 0px -70% 0px' })
+    heads.forEach((h) => h && io.observe(h))
+    return
+  }
+
+  document.documentElement.dataset.mode = 'pages'
+  const root = document.getElementById('pages')
+  const blocks = [...document.querySelectorAll('#article > .block')]
+  const pages = []
+
+  function newPage() {
+    const page = document.createElement('section')
+    page.className = 'page'
+    page.innerHTML = `
+      <div class="page-top"><b>${root.dataset.brand}</b><span></span></div>
+      <div class="page-body"></div>
+      <div class="page-foot"><span>${root.dataset.lesson}</span><em></em></div>`
+    root.appendChild(page)
+    pages.push(page)
+    return page.querySelector('.page-body')
+  }
+
+  const overflows = (body) => body.scrollHeight > body.clientHeight + 1
+
+  function fitAlone(body, block) {
+    const img = block.querySelector('.frame img')
+    if (img) {
+      const extra = block.offsetHeight - img.offsetHeight
+      img.style.maxHeight = `${body.clientHeight - extra}px`
+      img.style.width = 'auto'
+      img.style.margin = '0 auto'
+      block.querySelector('.frame').style.width = 'fit-content'
+      block.querySelector('.frame').style.margin = '0 auto'
+    }
+    if (overflows(body)) block.style.zoom = String(body.clientHeight / block.scrollHeight)
+  }
+
+  // 表格太长时按行拆：当前页留下放得下的行，其余行带着表头接到下一页
+  function splitTable(body, block) {
+    const tbody = block.querySelector('tbody')
+    if (!tbody || tbody.rows.length < 2) return null
+    const moved = []
+    while (overflows(body) && tbody.rows.length > 1) {
+      moved.unshift(tbody.lastElementChild)
+      tbody.lastElementChild.remove()
+    }
+    if (overflows(body) || !moved.length) {
+      tbody.append(...moved)
+      return null
+    }
+    const rest = block.cloneNode(true)
+    rest.removeAttribute('id')
+    rest.classList.add('cont')
+    rest.querySelector('tbody').replaceChildren(...moved)
+    return rest
+  }
+
+  async function paginate() {
+    await document.fonts.ready
+    await Promise.all([...document.images].map((img) => img.decode().catch(() => {})))
+
+    const queue = blocks.filter((b) => !b.classList.contains('web-only'))
+    let body = newPage()
+    while (queue.length) {
+      const block = queue.shift()
+      body.appendChild(block)
+      if (!overflows(body)) continue
+      // 结尾标记放不下就不要了，不为它单开一页
+      if (block.classList.contains('end') && body.children.length > 1) { block.remove(); continue }
+
+      if (block.classList.contains('table')) {
+        const rest = splitTable(body, block)
+        if (rest) { queue.unshift(rest); body = newPage(); continue }
+      }
+      if (body.children.length === 1) { fitAlone(body, block); continue }
+
+      const carry = [block]
+      block.remove()
+      while (body.lastElementChild?.classList.contains('keep') && body.children.length > 1) {
+        carry.unshift(body.lastElementChild)
+        body.lastElementChild.remove()
+      }
+      body = newPage()
+      queue.unshift(...carry)
+    }
+
+    pages.forEach((page, i) => {
+      const first = page.querySelector('.page-body > .block')
+      page.querySelector('.page-top span').textContent = first?.dataset.ctx ?? ''
+      page.querySelector('.page-foot em').innerHTML =
+        `${String(i + 1).padStart(2, '0')}<small> / ${String(pages.length).padStart(2, '0')}</small>`
+    })
+    window.__pagesReady = true
+  }
+
+  paginate()
+})()
+</script>
+</body>
+</html>
